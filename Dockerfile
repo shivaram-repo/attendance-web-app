@@ -1,11 +1,11 @@
-# 1. Base Image: Use the currently supported stable Debian 11 (Bullseye)
-FROM python:3.9-bullseye
+# --- STAGE 1: Build Stage (The ONLY stage that interacts with complex dependencies) ---
+# We use a base image that already includes the necessary dlib/OpenCV headers.
+FROM python:3.9-bullseye AS builder
 
-# 2. Install Essential System Dependencies
-# These are needed for NumPy, OpenCV, and runtime linking.
+# 1. Install Essential System Dependencies
+# These are necessary for the dlib-bin wheel to link correctly at runtime.
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-    # Compilers and development tools (still required for OpenCV/face-recognition)
     build-essential \
     cmake \
     python3-dev \
@@ -15,31 +15,40 @@ RUN apt-get update && \
     libjpeg-dev \
     libpng-dev \
     libtiff-dev \
-    # Final cleanup
+    # Cleanup
     && rm -rf /var/lib/apt/lists/*
 
-# 3. Configure Environment Variables (Keep for other dependencies)
-ENV CMAKE_ARGS="-DCMAKE_BUILD_TYPE=Release"
-ENV DLIB_NO_GUI_SUPPORT=ON
-
-# 4. Setup Application Directory
 WORKDIR /app
 COPY requirements.txt /app/
 
-# 5. CRITICAL FIX: Install pre-compiled Dlib binary
-# We use 'dlib-bin' (the binary version on PyPI) to completely skip the time-consuming 
-# and failure-prone source compilation of dlib.
-RUN pip install --no-cache-dir dlib-bin==19.24.2
+# 2. CRITICAL FIX: Install pre-compiled Dlib binary
+# Use the 'dlib-bin' package to avoid compiling dlib, solving the memory error (used over 8GB).
+# We install all dependencies here using the binary version of dlib.
+# Note: face-recognition automatically handles dependencies like numpy and face-recognition-models.
+RUN sed 's/^dlib==.*$/dlib-bin==19.24.2/' requirements.txt > /tmp/temp_requirements.txt && \
+    pip install --no-cache-dir -r /tmp/temp_requirements.txt
 
-# 6. Install Remaining Python Dependencies
-# We filter out the original 'dlib==19.24.2' entry from requirements.txt 
-# because it's now installed as 'dlib-bin'.
-RUN sed '/^dlib/d' requirements.txt > /tmp/requirements_rest.txt && \
-    pip install --no-cache-dir -r /tmp/requirements_rest.txt
+# --- STAGE 2: Final Runtime Image (Smallest size for deployment) ---
+# Start from a smaller, clean Python image for the final deployment.
+FROM python:3.9-slim-bullseye
 
-# 7. Copy Application Code
+# 3. Install Runtime Dependencies (Minimal set for the final image)
+# We only need system libraries required for face-recognition and opencv-python runtime.
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    libsm6 \
+    libxext6 \
+    libglib2.0-0 \
+    # Cleanup
+    && rm -rf /var/lib/apt/lists/*
+
+# 4. Copy Code and Dependencies from the Builder Stage
+WORKDIR /app
+# Copy the entire Python environment (dependencies) from the builder stage
+COPY --from=builder /usr/local/lib/python3.9/site-packages /usr/local/lib/python3.9/site-packages
+# Copy the application files
 COPY . /app
 
-# 8. Define Startup Command
+# 5. Define Startup Command
 EXPOSE 8000 
 CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:8000", "app:app"]
