@@ -1,14 +1,15 @@
-# 1. Base Image: Use Python 3.9 based on Debian 11 (Bullseye)
+# 1. Base Image: Use a full, stable Python 3.9 image on Debian 11 (Bullseye)
 FROM python:3.9-bullseye
 
-# 2. Install System Dependencies (CRITICAL STEP for dlib/face-recognition/opencv)
-# This command installs the necessary compilation tools and image libraries.
+# 2. Install System Dependencies (CRITICAL FIX: Adding python3-dev and cleaning up)
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     # Essential compilation tools
     build-essential \
     cmake \
     gfortran \
+    # FIX: Explicitly adding python3-dev for headers
+    python3-dev \
     # Libraries for dlib/OpenCV image processing
     libjpeg-dev \
     libpng-dev \
@@ -25,15 +26,17 @@ RUN apt-get update && \
 # DLIB_NO_GUI_SUPPORT speeds up compilation by disabling GUI features
 ENV CMAKE_ARGS="-DCMAKE_BUILD_TYPE=Release"
 ENV DLIB_NO_GUI_SUPPORT=ON
-
-# 4. Setup Application Directory
+# Set the application's working directory
 WORKDIR /app
-COPY . /app
 
-# 5. Install Python Dependencies
-# This step will now succeed because the system dependencies are satisfied
+# 4. Copy and Install Python Dependencies
+COPY requirements.txt /app/
+# This step is the slowest, as dlib and face-recognition compile
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 6. Define Startup Command (Using gunicorn, as specified in your files)
-# Gunicorn binds to 0.0.0.0 on a common port (8000) for web hosting platforms.
+# 5. Copy Application Code and Define Startup Command
+COPY . /app
+
+# The application uses Flask with gunicorn on port 8000 (common for Render/Heroku)
+EXPOSE 8000 
 CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:8000", "app:app"]
