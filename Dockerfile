@@ -26,7 +26,8 @@ RUN apt-get update && \
 ENV PYTHONPATH "${PYTHONPATH}:/usr/lib/python3/dist-packages"
 ENV CMAKE_ARGS="-DCMAKE_BUILD_TYPE=Release"
 ENV DLIB_NO_GUI_SUPPORT=ON
-ENV NUMPY_INCLUDE_DIR=/usr/include/python3.9 # For older dlib/numpy versions, sometimes necessary
+ENV NUMPY_INCLUDE_DIR=/usr/include/python3.9 
+# For older dlib/numpy versions, sometimes necessary
 
 # 3. Setup Application Directory
 WORKDIR /app
