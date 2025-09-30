@@ -32,4 +32,4 @@ COPY . /app
 # 9. Define Startup Command (Uses the gunicorn installed in the Conda environment)
 EXPOSE 8000 
 # FINAL FIX: Reduce Gunicorn workers to 1 to reduce memory usage below the 512Mi limit.
-CMD ["gunicorn", "-w", "1", "-b", "0.0.0.0:8000", "app:app"]
+CMD ["gunicorn", "-w", "1", "--threads", "4", "--timeout", "90", "-b", "0.0.0.0:8000", "app:app"]
