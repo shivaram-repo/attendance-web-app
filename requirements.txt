@@ -8,3 +8,5 @@ dlib
 git+https://github.com/ageitgey/face_recognition_models.git
 face-recognition
 gunicorn
+
+
