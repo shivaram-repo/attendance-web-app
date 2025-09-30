@@ -1,0 +1,10 @@
+Flask
+Flask-SQLAlchemy
+Flask-Cors 
+numpy
+opencv-python
+cmake
+dlib
+git+https://github.com/ageitgey/face_recognition_models.git
+face-recognition
+gunicorn

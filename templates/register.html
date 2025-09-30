@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>User Registration - Face Attendance</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='static.css') }}">
+</head>
+<body>
+  <div class="container">
+    <h1>Register New User</h1>
+
+    <form id="registerForm" enctype="multipart/form-data">
+      <label for="name">Name:</label>
+      <input type="text" id="name" name="name" required>
+
+      <label for="employee_id">Employee ID:</label>
+      <input type="text" id="employee_id" name="employee_id" required>
+
+      <label for="image">Upload Face Image (Clear, single face):</label>
+      <input type="file" id="image" name="image" accept="image/*" required>
+
+      <button type="submit">Register</button>
+    </form>
+
+    <p id="status"></p>
+    <div class="nav-link">
+        <a href="{{ url_for('home') }}">Go to Attendance Check-In</a>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById("registerForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      let status_p = document.getElementById("status");
+      status_p.innerText = "Submitting registration...";
+      
+      let formData = new FormData(document.getElementById("registerForm"));
+
+      // Use a relative path for deployment
+      let res = await fetch("/register", {
+        method: "POST",
+        body: formData
+      });
+
+      let data = await res.json();
+      status_p.innerText = data.message;
+      
+      // Optional: color code the status
+      if (data.status === 'success') {
+          status_p.style.backgroundColor = '#d4edda'; // green
+          document.getElementById("registerForm").reset(); // Clear form on success
+      } else {
+          status_p.style.backgroundColor = '#f8d7da'; // red
+      }
+    });
+  </script>
+</body>
+</html>

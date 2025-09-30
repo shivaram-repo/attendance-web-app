@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Face Attendance - Check-In</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='static.css') }}">
+</head>
+<body>
+  <div class="container">
+    <h1>Face Attendance Check-In</h1>
+    <video id="video" width="640" height="480" autoplay></video>
+    <button id="capture">Mark Attendance</button>
+    <p id="status"></p>
+    <div class="nav-link">
+        <a href="{{ url_for('register_ui') }}">Go to Registration Page</a>
+    </div>
+  </div>
+
+  <script>
+    const video = document.getElementById('video');
+    const status_p = document.getElementById("status");
+
+    // Request camera access
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => { video.srcObject = stream })
+      .catch(err => {
+        status_p.innerText = "Error accessing camera: " + err;
+      });
+
+    document.getElementById("capture").addEventListener("click", async () => {
+      status_p.innerText = "Processing...";
+      
+      let canvas = document.createElement("canvas");
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      canvas.getContext("2d").drawImage(video, 0, 0);
+      
+      canvas.toBlob(async (blob) => {
+        let formData = new FormData();
+        formData.append("image", blob, "capture.jpg");
+        
+        // Use a relative path or environment variable for deployment 
+        // For local testing, 'http://127.0.0.1:5000' is fine.
+        let res = await fetch("/attendance", { method: "POST", body: formData });
+        let data = await res.json();
+        
+        status_p.innerText = data.message;
+        
+        // Optional: color code the status
+        if (data.status === 'success') {
+             status_p.style.backgroundColor = '#d4edda'; // green
+        } else if (data.status === 'already_marked') {
+             status_p.style.backgroundColor = '#fff3cd'; // yellow
+        } else {
+             status_p.style.backgroundColor = '#f8d7da'; // red
+        }
+      }, 'image/jpeg'); // Specify image type
+    });
+  </script>
+</body>
+</html>
