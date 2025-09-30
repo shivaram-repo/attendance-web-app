@@ -1,10 +1,11 @@
-# Use a Debian base image that includes essential development tools
-FROM python:3.9-slim-buster
+# Use the full, stable Python base image (less likely to have missing headers/links)
+FROM python:3.9-buster
 
 # 1. Install System Dependencies (CRITICAL STEP)
-# This includes all necessary libraries for dlib and numpy compilation
-RUN apt-get update && \
-    apt-get install -y \
+# Use a single, robust RUN command for stability and better caching.
+# 'apt-get clean' is essential for keeping the image size down.
+RUN apt-get update --fix-missing && \
+    apt-get install -y --no-install-recommends \
     build-essential \
     cmake \
     libsm6 \
@@ -19,23 +20,23 @@ RUN apt-get update && \
     libfreetype6-dev \
     libatlas-base-dev \
     gfortran \
-    && rm -rf /var/lib/apt/lists/*
+    && apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 # 2. Configure Environment Variables
-# Essential for dlib and face-recognition to find components
+# Essential for dlib and face-recognition compilation
 ENV PYTHONPATH "${PYTHONPATH}:/usr/lib/python3/dist-packages"
 ENV CMAKE_ARGS="-DCMAKE_BUILD_TYPE=Release"
 ENV DLIB_NO_GUI_SUPPORT=ON
-ENV NUMPY_INCLUDE_DIR=/usr/include/python3.9 
-# For older dlib/numpy versions, sometimes necessary
+# Set the location where Flask will store static files
+ENV FLASK_STATIC_FOLDER=/app/static
 
 # 3. Setup Application Directory
 WORKDIR /app
 COPY . /app
 
 # 4. Install Python Dependencies
-# This step will now succeed because the system libraries are installed
-# We use --no-cache-dir to keep the final image size down
+# This step should now succeed because the system libraries are installed
 RUN pip install --no-cache-dir -r requirements.txt
 
 # 5. Expose Port and Define Startup Command
