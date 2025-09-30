@@ -1,39 +1,39 @@
-# Use Python 3.9 based on Debian 11 (Bullseye), which is the correct, available tag
+# 1. Base Image: Use Python 3.9 based on Debian 11 (Bullseye)
 FROM python:3.9-bullseye
 
-# 1. Install System Dependencies (CRITICAL STEP for dlib/opencv)
-# Use a single, robust RUN command for stability.
-# The `dlib` and `opencv` dependencies are crucial here.
+# 2. Install System Dependencies (CRITICAL STEP for dlib/face-recognition/opencv)
+# This command installs the necessary compilation tools and image libraries.
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    # Essential compilation tools
     build-essential \
     cmake \
+    gfortran \
+    # Libraries for dlib/OpenCV image processing
     libjpeg-dev \
     libpng-dev \
-    libatlas-base-dev \
-    libtesseract-dev \
-    gfortran \
+    libtiff-dev \
     libsm6 \
     libxext6 \
-    libxrender-dev \
     libglib2.0-0 \
-    # Clean up to keep the final image size down
+    libatlas-base-dev \
+    libtesseract-dev \
+    # Cleanup to reduce final image size
     && rm -rf /var/lib/apt/lists/*
 
-# 2. Configure Environment Variables
-ENV PYTHONPATH "${PYTHONPATH}:/usr/lib/python3/dist-packages"
+# 3. Configure Environment Variables
+# DLIB_NO_GUI_SUPPORT speeds up compilation by disabling GUI features
 ENV CMAKE_ARGS="-DCMAKE_BUILD_TYPE=Release"
 ENV DLIB_NO_GUI_SUPPORT=ON
-ENV FLASK_STATIC_FOLDER=/app/static
 
-# 3. Setup Application Directory
+# 4. Setup Application Directory
 WORKDIR /app
 COPY . /app
 
-# 4. Install Python Dependencies
-# This step should now compile dlib successfully.
+# 5. Install Python Dependencies
+# This step will now succeed because the system dependencies are satisfied
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 5. Expose Port and Define Startup Command
-EXPOSE 10000
-CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:10000", "app:app"]
+# 6. Define Startup Command (Using gunicorn, as specified in your files)
+# Gunicorn binds to 0.0.0.0 on a common port (8000) for web hosting platforms.
+CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:8000", "app:app"]
