@@ -1,50 +1,45 @@
-# 1. Base Image: Use the current stable base for Python 3.9 (Debian 11: Bullseye)
-# This fixes the apt-get 404/exit code 100 error.
+# 1. Base Image: Use the currently supported stable Debian 11 (Bullseye)
 FROM python:3.9-bullseye
 
-# 2. Install System Dependencies (The Maximum, Guaranteed Fix for Dlib/OpenCV)
+# 2. Install Essential System Dependencies
+# These are needed for NumPy, OpenCV, and runtime linking.
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-    # The absolute essentials for C/C++ compilation
+    # Compilers and development tools (still required for OpenCV/face-recognition)
     build-essential \
     cmake \
-    gfortran \
     python3-dev \
-    # Libraries specifically required for dlib/OpenCV math operations
-    libopenblas-dev \
-    liblapack-dev \
-    libhdf5-dev \
-    libssl-dev \
-    # Image I/O libraries
+    libsm6 \
+    libxext6 \
+    libglib2.0-0 \
     libjpeg-dev \
     libpng-dev \
     libtiff-dev \
-    # X11/GUI libraries (needed for linking, even if GUI is disabled)
-    libsm6 \
-    libxext6 \
-    libxrender-dev \
-    libglib2.0-0 \
-    # OCR (if needed by face-recognition)
-    libtesseract-dev \
-    # Cleanup to save space
+    # Final cleanup
     && rm -rf /var/lib/apt/lists/*
 
-# 3. Configure Environment Variables (Crucial for Dlib Compilation)
+# 3. Configure Environment Variables (Keep for other dependencies)
 ENV CMAKE_ARGS="-DCMAKE_BUILD_TYPE=Release"
 ENV DLIB_NO_GUI_SUPPORT=ON
 
 # 4. Setup Application Directory
 WORKDIR /app
-
-# 5. Copy and Install Python Dependencies (Separated for Dlib/NumPy stability)
 COPY requirements.txt /app/
-# Install numpy first, then the rest. This is the most reliable pip installation method.
-RUN pip install --no-cache-dir numpy && \
-    pip install --no-cache-dir -r requirements.txt
 
-# 6. Copy Application Code
+# 5. CRITICAL FIX: Install pre-compiled Dlib binary
+# We use 'dlib-bin' (the binary version on PyPI) to completely skip the time-consuming 
+# and failure-prone source compilation of dlib.
+RUN pip install --no-cache-dir dlib-bin==19.24.2
+
+# 6. Install Remaining Python Dependencies
+# We filter out the original 'dlib==19.24.2' entry from requirements.txt 
+# because it's now installed as 'dlib-bin'.
+RUN sed '/^dlib/d' requirements.txt > /tmp/requirements_rest.txt && \
+    pip install --no-cache-dir -r /tmp/requirements_rest.txt
+
+# 7. Copy Application Code
 COPY . /app
 
-# 7. Define Startup Command
+# 8. Define Startup Command
 EXPOSE 8000 
 CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:8000", "app:app"]
