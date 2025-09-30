@@ -1,12 +1,9 @@
 Flask
 Flask-SQLAlchemy
-Flask-Cors 
+Flask-Cors
+dlib==19.24.2
+face-recognition
 numpy
 opencv-python
-cmake
-dlib
-git+https://github.com/ageitgey/face_recognition_models.git
-face-recognition
 gunicorn
-
-
+psycopg2-binary

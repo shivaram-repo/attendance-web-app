@@ -8,25 +8,18 @@ import os
 import json
 import face_recognition_models
 
-# --- FACE RECOGNITION MODEL WORKAROUND (Corrected Placement) ---
-# This line forces the face_recognition models path to initialize,
-# solving the persistent 'Please install face_recognition_models...' error.
-face_recognition_models.get_model_root() 
-# ---------------------------------------------------------------------
-
 # Flask App Configuration 
 app = Flask(__name__)
 CORS(app) 
 
-# Configure SQLite database (uses a file named database.db)
-# NOTE: For production deployment on Render, you MUST use a persistent database 
-# like PostgreSQL via the DATABASE_URL environment variable, as SQLite files 
-# will be erased on every app restart.
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///database.db')
+# Configure PostgreSQL database URI. 
+# Render will inject the actual URL into the DATABASE_URL environment variable.
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL').replace("postgres://", "postgresql://", 1) \
+    if os.environ.get('DATABASE_URL') else 'sqlite:///database.db'
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
-
-# Database Models
+#Database Models
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
@@ -47,7 +40,7 @@ class Attendance(db.Model):
     # Relationship for easy access
     user = db.relationship('User', backref=db.backref('attendances', lazy=True))
 
-# Initial Setup / Routes for UI
+#Initial Setup / Routes for UI
 @app.route('/')
 def home():
     """Main attendance page."""
@@ -58,11 +51,12 @@ def register_ui():
     """Registration form page."""
     return render_template('register.html')
 
-# API Endpoints
+#API Endpoints
 
 # Register new user
 @app.route('/register', methods=['POST'])
 def register():
+    #(Error checking remains the same) 
     if 'name' not in request.form or 'employee_id' not in request.form or 'image' not in request.files:
         return jsonify({"status": "failed", "message": "Missing form data"}), 400
 
@@ -78,14 +72,13 @@ def register():
         img = face_recognition.load_image_file(file)
         encodings = face_recognition.face_encodings(img)
     except Exception as e:
-        print(f"Image processing failed: {str(e)}")
-        return jsonify({"status": "failed", "message": "Image processing failed."}), 500
+        return jsonify({"status": "failed", "message": f"Image processing failed: {str(e)}"}), 500
 
 
     if len(encodings) == 0:
         return jsonify({"status": "failed", "message": "No face detected in image"}), 400
 
-    # Convert numpy array to bytes for storage (float64 by default)
+    # Convert numpy array to bytes for storage
     encoding_bytes = encodings[0].tobytes()
 
     try:
@@ -104,8 +97,7 @@ def register():
         
     except Exception as e:
         db.session.rollback()
-        print(f"Database error during registration: {str(e)}")
-        return jsonify({"status": "failed", "message": "Database error during registration."}), 500
+        return jsonify({"status": "failed", "message": f"Database error: {str(e)}"}), 500
 
 # Mark attendance
 @app.route('/attendance', methods=['POST'])
@@ -121,8 +113,7 @@ def attendance():
         img = face_recognition.load_image_file(file)
         encodings = face_recognition.face_encodings(img)
     except Exception as e:
-        print(f"Image processing failed: {str(e)}")
-        return jsonify({"status": "failed", "message": "Image processing failed."}), 500
+        return jsonify({"status": "failed", "message": f"Image processing failed: {str(e)}"}), 500
 
     if len(encodings) == 0:
         return jsonify({"status": "failed", "message": "No face detected"}), 400
@@ -133,11 +124,11 @@ def attendance():
     users = User.query.all()
     
     for user in users:
-        # Convert stored binary data back to numpy array (must match the dtype used in registration)
-        db_encoding = np.frombuffer(user.face_embedding, dtype=np.float64) 
+        # Convert stored binary data back to numpy array
+        db_encoding = np.frombuffer(user.face_embedding, dtype=np.float64) # face_recognition uses float64
         
         # Ensure the shape is correct (1x128)
-        db_encoding = db.encoding.reshape(-1, 128)[0]
+        db_encoding = db_encoding.reshape(-1, 128)[0]
         
         # Compare faces
         matches = face_recognition.compare_faces([db_encoding], encoding, tolerance=0.6)
@@ -152,25 +143,20 @@ def attendance():
             if already_marked:
                 return jsonify({"status": "already_marked", "message": f"Attendance already marked for {user.name} today"})
 
-            try:
-                # Mark new attendance
-                new_attendance = Attendance(
-                    user_id=user.id, 
-                    date=today, 
-                    time=now.time(), 
-                    status="Present"
-                )
-                db.session.add(new_attendance)
-                db.session.commit()
-                return jsonify({"status": "success", "message": f"Attendance marked for {user.name}"})
-            except Exception as e:
-                db.session.rollback()
-                print(f"Database error during attendance marking: {str(e)}")
-                return jsonify({"status": "failed", "message": "Database error during attendance marking."}), 500
+            # Mark new attendance
+            new_attendance = Attendance(
+                user_id=user.id, 
+                date=today, 
+                time=now.time(), 
+                status="Present"
+            )
+            db.session.add(new_attendance)
+            db.session.commit()
+            return jsonify({"status": "success", "message": f"Attendance marked for {user.name}"})
 
     return jsonify({"status": "failed", "message": "Unknown user. Please register first."}), 404
 
-# Main Execution
+#Main Execution
 if __name__ == '__main__':
     # Create database tables if they don't exist
     with app.app_context():
