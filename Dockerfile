@@ -12,6 +12,7 @@ RUN conda create -n attendance python=3.9 -y && \
         face-recognition \
         opencv \
         numpy \
+        psycopg2 \
         pip -y && \
     \
     # 4. Filter requirements.txt to REMOVE packages already installed by Conda
@@ -32,4 +33,5 @@ COPY . /app
 # 9. Define Startup Command (Uses the gunicorn installed in the Conda environment)
 EXPOSE 8000 
 # FINAL FIX: Reduce Gunicorn workers to 1 to reduce memory usage below the 512Mi limit.
-CMD ["gunicorn", "-w", "1", "--threads", "4", "--timeout", "90", "-b", "0.0.0.0:8000", "app:app"]
+CMD ["sh", "-c", "python init_db.py && gunicorn -w 1 --threads 4 --timeout 90 -b 0.0.0.0:8000 app:app"]
+
