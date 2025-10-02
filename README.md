@@ -23,6 +23,7 @@ A robust, memory-efficient web application designed for automated employee atten
 
 ## 📺 Live Demo:
  **https://attendance-web-app-14vp.onrender.com/**
+ 
  (Feel free to use a fake face image or any image you like. Please note that all data will be deleted periodically to protect your privacy.)
 
 ## ⚙️ Local Setup
