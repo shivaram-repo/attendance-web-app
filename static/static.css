@@ -82,3 +82,57 @@ input[type="text"], input[type="file"] {
     text-decoration: none;
     font-weight: bold;
 }
+/* Toggle Button Top-Right */
+#toggleBtn {
+  position: fixed;
+  top: 20px;
+  right: 30px;
+  z-index: 9999;
+  width: 64px;
+  height: 32px;
+  border-radius: 20px;
+  font-size: 16px;
+  padding: 0;
+  background: #222;
+  color: #fff;
+  border: none;
+  transition: background 0.3s, color 0.3s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  cursor: pointer;
+}
+body.dark-mode #toggleBtn {
+  background: #f5f5f5;
+  color: #181818;
+}
+
+/* Main BG/text for dark mode */
+body.dark-mode {
+  background-color: #181818 !important;
+  color: #f5f5f5 !important;
+}
+body.dark-mode .container {
+  background: #232323 !important;
+  color: #f5f5f5 !important;
+}
+body.dark-mode h1,
+body.dark-mode label,
+body.dark-mode input,
+body.dark-mode p,
+body.dark-mode .nav-link a {
+  color: #f5f5f5 !important;
+}
+body.dark-mode h1 {
+  color: #8af57a !important; /* Lighter green for dark bg */
+}
+body.dark-mode button,
+body.dark-mode input[type=submit] {
+  background: #181818 !important;
+  color: #8af57a !important;
+  border: 1px solid #8af57a !important;
+}
+body.dark-mode input[type="text"], 
+body.dark-mode input[type="file"] {
+  background: #222 !important;
+  color: #fff !important;
+  border: 1px solid #8af57a !important;
+}
