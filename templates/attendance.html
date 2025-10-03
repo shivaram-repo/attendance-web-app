@@ -3,8 +3,29 @@
 <head>
   <title>Face Attendance - Check-In</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='static.css') }}">
+  <style>
+   .dark-mode {
+      background: #181818;
+      color: #f5f5f5;
+    }
+    button {
+      padding: 0.75rem 1.5rem;
+      border-radius: 999px;
+      border: none;
+      background: #222;
+      color: #fff;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.3s, color 0.3s;
+    }
+    .dark-mode button {
+      background: #f5f5f5;
+      color: #181818;
+    }
+    </style>  
 </head>
 <body>
+    <button id="toggleBtn" onclick="toggleMode()">Dark</button>
   <div class="container">
     <h1>Face Attendance Check-In</h1>
     <video id="video" width="640" height="480" autoplay></video>
@@ -16,6 +37,11 @@
   </div>
 
   <script>
+    function toggleMode() {
+      document.body.classList.toggle('dark-mode');
+      let btn = document.getElementById('toggleBtn');
+      btn.textContent = document.body.classList.contains('dark-mode') ? "Light" : "Dark";
+    }
     const video = document.getElementById('video');
     const status_p = document.getElementById("status");
 
