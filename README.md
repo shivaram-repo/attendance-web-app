@@ -108,3 +108,5 @@ The provided **`Dockerfile`** uses a robust Conda-based multi-step process to en
 Feel free to fork the repository and contribute. For major changes, please open an issue first to discuss what you would like to change.
 
 ---
+
+* *Note: This project was built by the help of AI and is intended for educational purposes.*
