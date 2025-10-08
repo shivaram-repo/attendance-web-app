@@ -2,13 +2,18 @@
 
 A robust, memory-efficient web application designed for automated employee attendance tracking using cutting-edge facial recognition technology. Built with Flask, the system provides a simple web interface for new user registration and a quick, live camera check-in process.
 
-## ✨ Features
+---
 
-* **Secure User Registration:** Users register by providing their name, employee ID, and uploading a clear face image.
-* **Face Embedding Storage:** The system uses the `face_recognition` library (powered by Dlib) to generate a unique 128D facial encoding, which is securely stored as a binary blob in the database.
-* **Real-time Check-In:** Employees use the web camera interface to instantly mark their attendance. The system captures a frame, extracts the face encoding, and compares it against the entire database.
-* **Database Tracking:** Attendance records (User ID, Date, Time, Status) are stored in a persistent database using Flask-SQLAlchemy.
-* **Memory-Optimized Deployment:** Engineered with a Conda-based Dockerfile to successfully deploy resource-intensive libraries (`dlib`, `opencv`) on constrained cloud environments (e.g., platforms with memory limits as low as 512MiB).
+## ✨ Features
+| Feature | Description |
+| :--- | :--- |
+| **User Onboarding** | Secure registration: **Name**, **Employee ID**, **Face Image** upload. 🧑‍💻 |
+| **Facial Recognition** | **128D facial encoding** (Dlib) generated and stored as a secure binary blob. 💾 |
+| **Check-In Process** | **Real-time attendance** via web camera; compares live encoding against database. 📸 |
+| **Data Management** | Attendance records (**User ID, Date, Time, Status**) stored via **Flask-SQLAlchemy**. 📊 |
+| **Deployment** | **Memory-Optimized** (Conda/Docker) for **constrained cloud environments** ($\le$ 512MiB). ☁️ |
+
+---
 
 ## 💻 Tech Stack
 
@@ -21,10 +26,14 @@ A robust, memory-efficient web application designed for automated employee atten
 | **Production Server** | **Gunicorn** | Production WSGI HTTP server. |
 | **Environment/Deployment**| **Conda / Docker** | Used for reliable, memory-efficient installation of binary dependencies. |
 
+---
+
 ## 📺 Live Demo:
  **https://attendance-web-app-14vp.onrender.com/**
  
  (Feel free to use a fake face image or any image you like. Please note that all data will be deleted periodically to protect your privacy.)
+
+ ---
 
 ## ⚙️ Local Setup
 
@@ -34,6 +43,8 @@ Follow these steps to set up the project on your local machine.
 
 * Python 3.9 or latest version
 * **Conda** (Miniconda or Anaconda) is highly recommended due to the dependencies.
+
+---
 
 ### Step-by-Step Installation
 
@@ -83,11 +94,17 @@ The provided **`Dockerfile`** uses a robust Conda-based multi-step process to en
     ```
     *(Note: The app runs on port 8000 inside the container, as configured in the `Dockerfile` and `CMD`.)*
 
+    ---
+
 ### Key Deployment Optimizations
 
 * **Conda:** Used to install resource-heavy packages (`dlib`, `opencv`) as pre-compiled binaries, avoiding the C++ compilation causing "Out of memory" errors during the build phase.
 * **Gunicorn:** The command is set to `CMD ["gunicorn", "-w", "1", "--threads", "4", "-b", "0.0.0.0:8000", "app:app"]` to limit the number of worker processes to **one**. This aggressively reduces the runtime memory usage, preventing the "Out of memory (used over 512Mi)" failure during startup.
 
+---
+
 ## 🤝 Contribution
 
 Feel free to fork the repository and contribute. For major changes, please open an issue first to discuss what you would like to change.
+
+---
