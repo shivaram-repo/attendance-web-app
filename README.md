@@ -79,6 +79,8 @@ Follow these steps to set up the project on your local machine.
 
 The application will start on `http://127.0.0.1:5000` (or `http://localhost:5000`).
 
+---
+
 ## 🐳 Deployment (Dockerized)
 
 The provided **`Dockerfile`** uses a robust Conda-based multi-step process to ensure a successful build and a low-memory runtime, which is essential for deployment on platforms with strict resource limits (like Render or Heroku).
